@@ -9,78 +9,82 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 class UserController extends  Controller
 {
-
     public function index()
     {
-        $users = User::whereNull('deleted_at')->get();
-        return response()->json($users);
+        return User::paginate(10);
     }
+
+
+
+
+
 
 
     public function store(Request $request)
     {
-
-
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'nullable|string|max:20',
-            'organization' => 'required|string'
-        
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'phone' => 'nullable|string',
+            'organization' => 'required|string'  
         ]);
-    
-                
-        $user = User::create($validatedData);
-        return response()->json($user, 201);
+
+        return User::create($validated);
     }
-    
-    public function update(Request $request, $id)
+
+    public function show($id)
     {
-        // Validação dos dados do utilizador
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id, 
-            'phone' => 'nullable|string|max:20',
-            'organization' => 'required|string',
-            'permissions' => 'array' 
-        ]);
- 
         $user = User::findOrFail($id);
-    
-      
-        $user->update($validatedData);
-    
-      
-        if ($request->has('permissions')) {
-         
-            $user->permissions()->sync($validatedData['permissions']);
-        }
-    
         return response()->json($user);
     }
 
-    public function destroy(User $user)
-       {
-           $user->delete();
+
+
+
+    public function update(Request $request, $id)
+{
+    $validated = $request->validate([
+        'name' => 'sometimes|string',
+        'email' => 'sometimes|email|unique:users,email,' . $id,
+        'phone' => 'nullable|string',
+        'organization' => 'sometimes|string'
+    ]);
+
+    $user = User::findOrFail($id);
+    $user->update($validated);
+
+    return $user;
+}
+    
+
+public function destroy($id)
+{
+    $user = User::findOrFail($id);
+    $user->delete();
+
+    return response()->json(['message' => 'Usuário excluído com sucesso.']);
+}
+
+       
+
+
+public function assignPermissions(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+
+    $validated = $request->validate([
+        'permissions' => 'required|array',
+        'permissions.*' => 'exists:permissions,id' 
+    ]);
+
    
-           return response()->json(['message' => 'Usuário excluído com sucesso']);
-       }
+    $user->permissions()->sync($validated['permissions']);
 
-
-       public function show($id)
-       {
-           // Obter o utilizador com as permissões atribuídas
-           $user = User::with('permissions')->findOrFail($id);
-       
-           // Obter todas as permissões disponíveis
-           $allPermissions = Permission::with('children')->whereNull('parent_id')->get();
-       
-             return response()->json([
-               'user' => $user,
-               'assigned_permissions' => $user->permissions->pluck('id'), // IDs das permissões já atribuídas
-               'all_permissions' => $allPermissions, // Todas as permissões para exibir no frontend
-           ]);
-       }
-       
+    return response()->json([
+        'message' => 'Permissões sincronizadas com sucesso!',
+        'user_permissions' => $user->permissions()->get() 
+    ]);
+}
 
 }

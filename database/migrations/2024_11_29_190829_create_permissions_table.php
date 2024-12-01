@@ -14,11 +14,11 @@ return new class extends Migration
     public function up()
     {
         Schema::create('permissions', function (Blueprint $table) {
-    $table->id();
-    $table->string('name'); 
-    $table->foreignId('parent_id')->nullable()->constrained('permissions')->onDelete('cascade');
-    $table->timestamps();
-    
+            $table->id();
+            $table->string('name');
+            $table->foreignId('parent_id')->nullable()->constrained('permissions')->onDelete('cascade');
+            $table->softDeletes();
+            $table->timestamps();
         });
     }
 

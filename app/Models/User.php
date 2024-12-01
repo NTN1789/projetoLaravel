@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -17,19 +19,19 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    use SoftDeletes;
     protected $fillable = [
         'name',
         'email',
         'phone', 
         'organization',
-        'creationDate',
-        'lastLogin'
+        'creationDate'
     ];
     
-    public function permissions()
-{
-    return $this->belongsToMany(Permission::class, 'permission_user');
-}
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'user_permission');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -47,8 +49,4 @@ class User extends Authenticatable
      * @var array<string, string>
      */
 
-     use 
-     SoftDeletes;
-    
-        protected $dates = ['deleted_at'];
 }

@@ -4,21 +4,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Permission extends Model
 {
-    public function children()
-    {
-        return $this->hasMany(Permission::class, 'parent_id');
-    }
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = ['name', 'parent_id'];
 
     public function parent()
     {
         return $this->belongsTo(Permission::class, 'parent_id');
     }
 
-    public function users()
+    public function children()
     {
-        return $this->belongsToMany(User::class, 'permission_user');
+        return $this->hasMany(Permission::class, 'parent_id');
     }
+
+
+
 }
+
+
